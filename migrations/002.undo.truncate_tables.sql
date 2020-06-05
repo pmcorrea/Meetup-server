@@ -1,0 +1,2 @@
+TRUNCATE
+  table1;
