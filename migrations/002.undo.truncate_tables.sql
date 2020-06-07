@@ -1,2 +1,0 @@
-TRUNCATE
-  table1;

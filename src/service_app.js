@@ -1,10 +1,8 @@
 const service_app = {
-
-	getUserIdByUsername(knex, username) {
-		return knex
-		.select("id")
-		.from("users")
-		.where("user_name", username)
+	getAllInvites(knex) {
+		console.log("fired knex");
+		console.log(knex.select("*").from("invites"));
+		return knex.select("*").from("invites");
 	},
 };
 

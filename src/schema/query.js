@@ -53,7 +53,7 @@ const RootMutation = new GraphQLObjectType({
 	fields: {
 		// Add a habit
 		addHabit: {
-			type: HabitType,
+			type: BookType,
 			args: {
 				title: { type: new GraphQLNonNull(GraphQLString) },
 			},
