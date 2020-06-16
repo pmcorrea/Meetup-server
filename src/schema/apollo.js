@@ -19,58 +19,234 @@ const service_app = require("../service_app");
 // - Caching
 
 const typeDefs = gql`
-	type Book {
+	type User {
 		id: Int!
-		author: String!
-		title: String!
+		user_first_name: String!
+		user_last_name: String!
+		user_email: String!
+		user_password: String!
+		user_zipcode: String!
+		user_employer: String!
+		user_employer_address: String!
+		user_no_of_followers: String!
+		user_status: String!
+		user_avatar: String!
+		user_bio: String!
+	}
+
+	type Event {
+		id: Int!
+		event_name: String!
+		event_description: String!
+		event_location_name: String!
+		event_address: String!
+		event_date: String!
+		event_time: String!
+		event_host_id: Int!
+		event_no_of_participants: String!
+		event_cover_img: String!
+	}
+
+	type Participant {
+		id: Int!
+		user: User!
+		event: Event!
+		participant_status: String!
+	}
+
+	type Follower {
+		id: Int!
+		user: User!
+		follower: User!
 	}
 
 	type Invite {
 		id: Int!
-		event_id: Int!
-		user_id: Int!
-		sender_id: Int!
+		event: Event!
+		user: User!
+		sender: User!
+	}
+
+	type Bookmark {
+		id: Int!
+		user: User!
+		event: Event!
 	}
 
 	type Query {
-		books: [Book!]!
-		book(id: Int!): Book
-		invites: [Invite!]!
-	}
+		users: [User!]!
+		user(id: Int!): User
 
-	type Mutation {
-		addBook(id: Int!, title: String!, author: String!): [Book!]!
+		events: [Event!]!
+		event(id: Int!): Event
+		eventsByHost(id: Int!): [Event!]!
+
+		participants(eventId: Int!): [Participant!]!
+
+		invites: [Invite!]!
+		invitesByUserId(userId: Int!): [Invite!]!
+		invitesByEventId(eventId: Int!): [Invite!]!
+
+		bookmarksByUserId(userId: Int!): [Bookmark!]!
 	}
 `;
 
 const resolvers = {
 	Query: {
-		books: () => {
-			return books_lib;
+		user: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				args.id
+			);
+
+			return result[0];
 		},
 
-		book: (parent, args) => {
-			return books_lib.find((book) => book.id === args.id);
+		users: async (parent, args, context) => {
+			let result = await service_app.getAllUsers(context.knexInstance);
+			return result;
+		},
+
+		events: async (parent, args, context) => {
+			let result = await service_app.getAllEvents(context.knexInstance);
+			return result;
+		},
+
+		event: async (parent, args, context) => {
+			let result = await service_app.getEventById(
+				context.knexInstance,
+				args.id
+			);
+			return result[0];
+		},
+
+		eventsByHost: async (parent, args, context) => {
+			let result = await service_app.getEventsByHostId(
+				context.knexInstance,
+				args.id
+			);
+			return result;
+		},
+
+		participants: async (parent, args, context) => {
+			let result = await service_app.getParticipants(
+				context.knexInstance,
+				args.eventId
+			);
+			return result;
 		},
 
 		invites: async (parent, args, context) => {
-			console.log("start");
 			let result = await service_app.getAllInvites(context.knexInstance);
-			console.log(result);
-			console.log("done");
+			return result;
+		},
+
+		invitesByUserId: async (parent, args, context) => {
+			let result = await service_app.getInvitesByUserId(
+				context.knexInstance,
+				args.userId
+			);
+			return result;
+		},
+
+		invitesByEventId: async (parent, args, context) => {
+			let result = await service_app.getInvitesByEventId(
+				context.knexInstance,
+				args.eventId
+			);
+			return result;
+		},
+
+		bookmarksByUserId: async (parent, args, context) => {
+			let result = await service_app.getBookmarksByUserId(
+				context.knexInstance,
+				args.userId
+			);
 			return result;
 		},
 	},
 
-	Mutation: {
-		addBook: (parent, args) => {
-			books_lib.push({
-				id: args.id,
-				author: args.author,
-				title: args.title,
-			});
+	Participant: {
+		user: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.user_id
+			);
 
-			return books_lib;
+			return result[0];
+		},
+
+		event: async (parent, args, context) => {
+			let result = await service_app.getEventById(
+				context.knexInstance,
+				parent.event
+			);
+			return result[0];
+		},
+	},
+
+	Follower: {
+		user: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.user_id
+			);
+
+			return result[0];
+		},
+
+		follower: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.following_id
+			);
+			return result[0];
+		},
+	},
+
+	Invite: {
+		event: async (parent, args, context) => {
+			let result = await service_app.getEventById(
+				context.knexInstance,
+				parent.event_id
+			);
+
+			return result[0];
+		},
+
+		user: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.user_id
+			);
+			return result[0];
+		},
+
+		sender: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.sender_id
+			);
+			return result[0];
+		},
+	},
+
+	Bookmark: {
+		event: async (parent, args, context) => {
+			let result = await service_app.getEventById(
+				context.knexInstance,
+				parent.event_id
+			);
+
+			return result[0];
+		},
+
+		user: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.user_id
+			);
+			return result[0];
 		},
 	},
 };

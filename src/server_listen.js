@@ -11,13 +11,13 @@ const knex = require("knex");
 
 const knexInstance = knex({
 	client: "pg",
-	// connection: process.env.DATABASE_URL,
-	connection: {
-		host: DATABASE_HOST,
-		user: DATABASE_USER,
-		password: DATABASE_PASSWORD,
-		database: DATABASE_DATABASE,
-	},
+	connection: process.env.DATABASE_URL,
+	// connection: {
+	// 	host: DATABASE_HOST,
+	// 	user: DATABASE_USER,
+	// 	password: DATABASE_PASSWORD,
+	// 	database: DATABASE_DATABASE,
+	// },
 });
 
 // Avoid dependency cycle
