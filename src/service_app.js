@@ -69,8 +69,12 @@ const service_app = {
 	},
 
 	// Follower Methods
-	getFollowers(knex, userId) {
-		return knex.select("*").from("followers").where("following_id", userId);
+	getFollowById(knex, id) {
+		return knex.select("*").from("followers").where("id", id);
+	},
+
+	getFollowers(knex, id) {
+		return knex.select("*").from("followers").where("following_id", id);
 	},
 
 	getFollowing(knex, userId) {
@@ -88,6 +92,10 @@ const service_app = {
 	// Invite Methods
 	getAllInvites(knex) {
 		return knex.select("*").from("invites");
+	},
+
+	getInviteById(knex, id) {
+		return knex.select("*").from("invites").where("id", id);
 	},
 
 	getInvitesByUserId(knex, userId) {
@@ -109,6 +117,10 @@ const service_app = {
 	// Bookmark Methods
 	getBookmarksByUserId(knex, userId) {
 		return knex.select("*").from("bookmarks").where("user_id", userId);
+	},
+
+	getBookmarksById(knex, id) {
+		return knex.select("*").from("bookmarks").where("id", id);
 	},
 
 	addBookmark(knex, bookmark) {
