@@ -1,5 +1,6 @@
 const { gql } = require("apollo-server-express");
 const service_app = require("../service_app");
+const service_auth = require("../service_auth");
 
 // Scalar Types: Int, Float, String, Boolean, ID
 // Object Types: collections of fields which are scalar or object type
@@ -45,6 +46,7 @@ const typeDefs = gql`
 		event_host_id: Int!
 		event_no_of_participants: String!
 		event_cover_img: String!
+		host: User!
 	}
 
 	type Participant {
@@ -73,6 +75,13 @@ const typeDefs = gql`
 		event: Event!
 	}
 
+	type Login {
+		id: Int
+		user_name: String
+		password: String
+		token: String
+	}
+
 	type Query {
 		users: [User!]!
 		user(id: Int!): User
@@ -81,6 +90,9 @@ const typeDefs = gql`
 		event(id: Int!): Event
 		eventsByHost(id: Int!): [Event!]!
 
+		getTopHosts: [User!]!
+		getTopEvents: [Event!]!
+
 		participants(eventId: Int!): [Participant!]!
 
 		invites: [Invite!]!
@@ -88,6 +100,8 @@ const typeDefs = gql`
 		invitesByEventId(eventId: Int!): [Invite!]!
 
 		bookmarksByUserId(userId: Int!): [Bookmark!]!
+
+		login(user_name: String!, password: String!): Login
 	}
 `;
 
@@ -164,6 +178,71 @@ const resolvers = {
 			);
 			return result;
 		},
+
+		login: async (parent, args, context) => {
+			let userFound = async () => {
+				try {
+					if (args.user_name == "" || args.password == "") {
+						return new Error(
+							"Username and password must not be blank."
+						);
+					}
+
+					let result;
+					try {
+						result = await service_auth.getUser(
+							context.knexInstance,
+							args.user_name
+						);
+					} catch (e) {
+						console.log("Could not retrieve user", e);
+					}
+
+					if (result == undefined) {
+						return new Error("Username or password is incorrect.");
+					}
+
+					let passwordCheck;
+					try {
+						passwordCheck = await service_auth.comparePasswords(
+							args.password,
+							result.user_password
+						);
+					} catch (e) {
+						console.log("password check failed", e);
+					}
+
+					if (!passwordCheck) {
+						return new Error("Username or password is incorrect.");
+					}
+
+					if (passwordCheck) {
+						let createToken = await service_auth.createJwt(
+							result.user_name,
+							{
+								id: result.id,
+								user_name: result.user_name,
+							}
+						);
+
+						return { ...result, token: createToken };
+					}
+				} catch (error) {
+					return new Error("Network or server error occured.");
+				}
+			};
+			return userFound();
+		},
+
+		getTopHosts: async (parent, args, context) => {
+			let result = await service_app.getTopHosts(context.knexInstance);
+			return result;
+		},
+
+		getTopEvents: async (parent, args, context) => {
+			let result = await service_app.getTopEvents(context.knexInstance);
+			return result;
+		},
 	},
 
 	Participant: {
@@ -179,7 +258,7 @@ const resolvers = {
 		event: async (parent, args, context) => {
 			let result = await service_app.getEventById(
 				context.knexInstance,
-				parent.event
+				parent.event_id
 			);
 			return result[0];
 		},
@@ -245,6 +324,16 @@ const resolvers = {
 			let result = await service_app.getUserById(
 				context.knexInstance,
 				parent.user_id
+			);
+			return result[0];
+		},
+	},
+
+	Event: {
+		host: async (parent, args, context) => {
+			let result = await service_app.getUserById(
+				context.knexInstance,
+				parent.event_host_id
 			);
 			return result[0];
 		},

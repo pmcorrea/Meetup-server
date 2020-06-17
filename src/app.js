@@ -20,9 +20,14 @@ const { typeDefs, resolvers } = require("./schema/apollo.js");
 const server = new ApolloServer({
 	typeDefs,
 	resolvers,
-	context: ({ req }) => ({
-		knexInstance: app.get("db"),
-	}),
+	context: ({ req }) => {
+		const token = req.headers.authorization || "";
+
+		return {
+			knexInstance: app.get("db"),
+			token: token,
+		};
+	},
 });
 
 server.applyMiddleware({ app, path: "/graphql" });

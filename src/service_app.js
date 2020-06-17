@@ -20,6 +20,20 @@ const service_app = {
 		return knex("users").update(user).where("id", userId);
 	},
 
+	getTopHosts(knex) {
+		return knex("users")
+			.select("*")
+			.orderBy("user_no_of_followers", "desc")
+			.limit(20);
+	},
+
+	getTopEvents(knex) {
+		return knex("events")
+			.select("*")
+			.orderBy("event_no_of_participants", "desc")
+			.limit(20);
+	},
+
 	// Event Methods
 	getAllEvents(knex) {
 		return knex.select("*").from("events");
